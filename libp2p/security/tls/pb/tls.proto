@@ -1,0 +1,6 @@
+syntax = "proto2";
+
+package tls.pb;
+
+import "libp2p/crypto/pb/crypto.proto";
+
