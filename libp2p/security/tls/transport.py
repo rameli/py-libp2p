@@ -57,7 +57,7 @@ class PlaintextHandshakeReadWriter(VarIntLengthMsgReadWriter):
     max_msg_size = 1 << 16
 
 
-class InsecureSession(BaseSession):
+class TlsSession(BaseSession):
     def __init__(
         self,
         *,
@@ -119,7 +119,7 @@ async def run_handshake(
         remote_msg_bytes = await read_writer.read_msg()
     except RawConnError as e:
         raise HandshakeFailure("connection closed") from e
-    remote_msg = plaintext_pb2.Exchange()
+    remote_msg = tls_pb2.Exchange()
     remote_msg.ParseFromString(remote_msg_bytes)
     received_peer_id = ID(remote_msg.id)
 
@@ -149,7 +149,7 @@ async def run_handshake(
             f"peer_id_from_received_pubkey={peer_id_from_received_pubkey}"
         )
 
-    secure_conn = InsecureSession(
+    secure_conn = TlsSession(
         local_peer=local_peer,
         local_private_key=local_private_key,
         remote_peer=received_peer_id,
@@ -163,7 +163,7 @@ async def run_handshake(
     return secure_conn
 
 
-class InsecureTransport(BaseSecureTransport):
+class TlsTransport(BaseSecureTransport):
     """
     Provides the "identity" upgrader for a ``IRawConnection``, i.e. the upgraded
     transport does not add any additional security.
@@ -193,10 +193,10 @@ class InsecureTransport(BaseSecureTransport):
         )
 
 
-def make_exchange_message(pubkey: PublicKey) -> plaintext_pb2.Exchange:
+def make_exchange_message(pubkey: PublicKey) -> tls_pb2.Exchange:
     pubkey_pb = crypto_pb2.PublicKey(
         key_type=pubkey.get_type().value,
         data=pubkey.to_bytes(),
     )
     id_bytes = ID.from_pubkey(pubkey).to_bytes()
-    return plaintext_pb2.Exchange(id=id_bytes, pubkey=pubkey_pb)
+    return tls_pb2.Exchange(id=id_bytes, pubkey=pubkey_pb)
