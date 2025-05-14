@@ -44,11 +44,9 @@ from libp2p.security.exceptions import (
     HandshakeFailure,
 )
 
-# from .pb import (
-#     tls_pb2,
-# )
-
-
+from .pb import (
+    plaintext_pb2,
+)
 
 TLS_PROTOCOL_ID = TProtocol("/tls/1.0.0")
 
@@ -119,7 +117,7 @@ async def run_handshake(
         remote_msg_bytes = await read_writer.read_msg()
     except RawConnError as e:
         raise HandshakeFailure("connection closed") from e
-    remote_msg = tls_pb2.Exchange()
+    remote_msg = plaintext_pb2.Exchange()
     remote_msg.ParseFromString(remote_msg_bytes)
     received_peer_id = ID(remote_msg.id)
 
@@ -193,10 +191,10 @@ class TlsTransport(BaseSecureTransport):
         )
 
 
-def make_exchange_message(pubkey: PublicKey) -> tls_pb2.Exchange:
+def make_exchange_message(pubkey: PublicKey) -> plaintext_pb2.Exchange:
     pubkey_pb = crypto_pb2.PublicKey(
         key_type=pubkey.get_type().value,
         data=pubkey.to_bytes(),
     )
     id_bytes = ID.from_pubkey(pubkey).to_bytes()
-    return tls_pb2.Exchange(id=id_bytes, pubkey=pubkey_pb)
+    return plaintext_pb2.Exchange(id=id_bytes, pubkey=pubkey_pb)
