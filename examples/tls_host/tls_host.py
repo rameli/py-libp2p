@@ -54,7 +54,5 @@ async def main():
             except Exception as e:
                 print(f"FAILED to connect to {remote_multiaddr}: {e}")
 
-            await trio.sleep_forever()
-
 
 trio.run(main)
